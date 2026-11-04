@@ -1,0 +1,3 @@
+from typing import Protocol
+class AccountErasure(Protocol):
+    def erase(self,user:str,units:list[str])->None: ...
