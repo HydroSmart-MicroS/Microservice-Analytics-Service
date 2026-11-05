@@ -23,7 +23,7 @@ class Gateway:
 class DashboardTests(unittest.TestCase):
     def test_tenant_partial_first_day_is_not_a_complete_comparison_day(self):
         monday=NOW.date()-timedelta(days=NOW.weekday())
-        start=monday-timedelta(days=14)
+        start=monday-timedelta(days=7)
         data=[{'date':(start+timedelta(days=i)).isoformat(),'deviceId':'one','liters':100} for i in range(20)]
         class TenantGateway(Gateway):
             def access(self,*args):return {'ownerUserId':'owner','visibleFrom':start.isoformat()+'T12:00:00-05:00'}

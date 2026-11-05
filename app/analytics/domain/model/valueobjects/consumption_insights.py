@@ -8,7 +8,7 @@ def comparison_ranges(today):
     previous_month = (month - timedelta(days=1)).replace(day=1)
     days = min(today.day - 1, (month - previous_month).days)
     return {
-        'weekly': (monday - timedelta(days=7), monday, monday - timedelta(days=14), monday - timedelta(days=7)),
+        'weekly': (monday, today, monday - timedelta(days=7), today - timedelta(days=7)),
         'monthly': (month, month + timedelta(days=days), previous_month, previous_month + timedelta(days=days)),
     }
 
@@ -31,7 +31,8 @@ def compare_periods(rows, ranges):
             'previousStart': previous.isoformat(), 'previousEnd': (previous_end - timedelta(days=1)).isoformat() if days else None,
             'currentLiters': float(current) if complete else None, 'previousLiters': float(old) if complete else None,
             'changePercent': float((current - old) / old * 100) if complete and old > 0 else None,
-            'reason': '' if complete else 'Aún no hay lecturas de todos los días de ambos períodos.' if days else 'La comparación mensual estará disponible desde el segundo día del mes.',
+            'reason': '' if complete else 'Aún no hay lecturas de todos los días de ambos períodos.' if days else
+                'La comparación semanal estará disponible desde el martes, con el primer día completo.' if kind=='weekly' else 'La comparación mensual estará disponible desde el segundo día del mes.',
         }
     return result
 
@@ -49,9 +50,9 @@ def recommendations(rows, comparisons, today):
     if weekly['available'] and weekly['changePercent'] is not None:
         change = weekly['changePercent']
         if change > 0:
-            advice.append({'code': 'weekly_increase', 'title': 'Revisa el aumento de tu consumo', 'body': f'La última semana completa consumiste {change:.1f}% más que la anterior. Revisa las actividades de mayor uso y prueba reducir su duración.', 'path': '/historial'})
+            advice.append({'code': 'weekly_increase', 'title': 'Revisa el aumento de tu consumo', 'body': f'Esta semana consumiste {change:.1f}% más que en los mismos días completos de la anterior. Revisa las actividades de mayor uso y prueba reducir su duración.', 'path': '/historial'})
         elif change < 0:
-            advice.append({'code': 'weekly_decrease', 'title': 'Conserva los hábitos que te ayudaron', 'body': f'La última semana completa consumiste {abs(change):.1f}% menos que la anterior. Identifica qué cambió para mantener la mejora.', 'path': '/historial'})
+            advice.append({'code': 'weekly_decrease', 'title': 'Conserva los hábitos que te ayudaron', 'body': f'Esta semana consumiste {abs(change):.1f}% menos que en los mismos días completos de la anterior. Identifica qué cambió para mantener la mejora.', 'path': '/historial'})
     devices, days = {}, {}
     for row in recent:
         value = Decimal(str(row['liters']))

@@ -8,14 +8,15 @@ def rows(start, end, liters=100):
 
 
 class ConsumptionInsightsTests(unittest.TestCase):
-    def test_weekly_uses_two_complete_weeks_and_ignores_today(self):
+    def test_weekly_compares_current_week_completed_days_and_ignores_today(self):
         today = date(2026, 11, 3)
-        data = rows(date(2026, 10, 19), date(2026, 10, 26), 100) + rows(date(2026, 10, 26), date(2026, 11, 2), 150)
+        data = rows(date(2026, 10, 26), date(2026, 10, 27), 100) + rows(date(2026, 11, 2), today, 150)
         data += rows(today, today+timedelta(days=1), 999999)
         value = compare_periods(data, comparison_ranges(today))['weekly']
         self.assertTrue(value['available'])
-        self.assertEqual((value['currentLiters'], value['previousLiters'], value['changePercent']), (1050, 700, 50))
-        self.assertEqual((value['currentStart'], value['currentEnd']), ('2026-10-26', '2026-11-01'))
+        self.assertEqual((value['currentLiters'], value['previousLiters'], value['changePercent']), (150, 100, 50))
+        self.assertEqual((value['currentStart'], value['currentEnd']), ('2026-11-02', '2026-11-02'))
+        self.assertFalse(compare_periods([],comparison_ranges(date(2026,11,2)))['weekly']['available'])
 
     def test_monthly_uses_same_number_of_completed_days_across_year_and_leap_boundary(self):
         for today in (date(2027, 1, 3), date(2028, 3, 31)):
@@ -44,7 +45,7 @@ class ConsumptionInsightsTests(unittest.TestCase):
 
     def test_recommendations_use_actual_trend_and_device_and_wait_for_history(self):
         today = date(2026, 11, 3)
-        data = rows(date(2026, 10, 19), date(2026, 10, 26), 100) + rows(date(2026, 10, 26), today, 150)
+        data = rows(date(2026, 10, 26), date(2026, 10, 27), 100) + rows(date(2026, 10, 27), today, 150)
         advice = recommendations(data, compare_periods(data, comparison_ranges(today)), today)
         self.assertEqual(advice[0]['code'], 'weekly_increase')
         self.assertIn('50.0%', advice[0]['body'])

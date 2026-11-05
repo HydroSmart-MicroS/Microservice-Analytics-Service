@@ -34,17 +34,19 @@ class MonitoringCommandServiceImpl:
         data=self.dependencies.consumption(str(goal['unit_id']),start.isoformat(),now.isoformat())
         tariff=self.tariffs.current(str(goal['unit_id']),access['ownerUserId'])
         cost=tariff.estimate(Decimal(str(data['liters'])))['total']
-        progress={'cost':cost,'liters':data['liters'],'percent':float(Decimal(cost)/goal['budget_amount']*100)}
-        self.repository.publish_goal_threshold(goal,progress)
         # A new tariff can exceed an existing budget before any water is consumed.
         minimum=Decimal(tariff.estimate(Decimal(0))['total'])
         target=tariff.liters_for_budget(goal['budget_amount']) if goal['budget_amount']>minimum else Decimal(0)
+        progress={'cost':cost,'liters':data['liters'],
+                  'percent':float(Decimal(str(data['liters']))/target*100) if target>0 else 0,
+                  'budgetPercent':float(Decimal(cost)/goal['budget_amount']*100),'targetLiters':str(target)}
+        if target>0:self.repository.publish_goal_threshold(goal,progress)
         return {'id':str(goal['id']),'month':str(goal['month']),'budget':str(goal['budget_amount']),
                 'targetLiters':str(target),'progress':progress,'minimumMonthlyCost':str(minimum)}
     def alerts(self,unit,token,user):
         self.dependencies.access(unit,token)
         return self.repository.alerts(user,unit)
-    def resolve(self,unit,token,user,alert):
+    def resolve(self,unit,token,user,alert,decision='resolved'):
         self.dependencies.access(unit,token)
-        return self.repository.resolve(user,alert)
+        return self.repository.resolve(user,alert,decision,unit)
 

@@ -27,6 +27,12 @@ consumer = ReadingConsumer(os.environ["RABBITMQ_URL"], ReadingEventsController(R
 monitoring_repository=PgMonitoringRepository()
 monitoring_dependencies=MonitoringDependenciesFacade()
 monitoring_commands=MonitoringCommandServiceImpl(monitoring_repository,PgTariffRepository(),monitoring_dependencies)
+from .analytics.application.internal.commandservices.device_presence_command_service import DevicePresenceCommandService
+from .analytics.infrastructure.messaging.device_presence_worker import DevicePresenceWorker
+presence_commands=DevicePresenceCommandService(monitoring_repository,monitoring_dependencies)
+def check_presence(row):
+    with lifecycle_gate.read(),transaction():presence_commands.check(row)
+presence_worker=DevicePresenceWorker(presence_commands,check_presence)
 monitoring_controller=MonitoringEventsController(MonitoringEventHandler(monitoring_repository,monitoring_dependencies,monitoring_commands))
 def process_monitoring(body):
     import json
@@ -45,9 +51,11 @@ async def lifespan(app):
     monitoring_consumer.start()
     outbox.start()
     rpc_server.start()
+    presence_worker.start()
     try:
         yield
     finally:
+        presence_worker.stop()
         consumer.stop()
         monitoring_consumer.stop()
         outbox.stop()

@@ -17,6 +17,8 @@ class MonitoringEventHandler:
         if snapshot is None:
             self.repository.mark_monitoring(reading.event_id);return True
         self.repository.store_sample(reading)
+        device=next((d for d in snapshot.get('devices',[]) if str(d['id'])==str(reading.device_id)),{})
+        location=str(device.get('name','Medidor'))+' · '+str(device.get('category','Zona sin configurar'))
         settings=self.repository.rules(str(reading.unit_id),snapshot['ownerUserId'])
         recipients=[{'userId':snapshot['ownerUserId'],'visibleFrom':None},*snapshot['tenants']]
         cutoff=observed-timedelta(seconds=int(settings['windowSeconds']))
@@ -33,7 +35,7 @@ class MonitoringEventHandler:
                 # Zero samples and missing intervals break continuity; normal bursts do not become leaks.
                 if rows and rows[-1]['measured_at']>=observed-timedelta(seconds=30) and possible_leak(rows,int(settings['leakWindowSeconds']),int(settings['normalStartHour']),int(settings['normalEndHour']),settings['leakAllDay']):
                     self.repository.add_alert(recipient['userId'],str(reading.unit_id),str(reading.device_id),'possible_leak',
-                        'Posible fuga de agua','Se detectó flujo continuo en el período vigilado. Revisa este punto de consumo.',settings['cooldownSeconds'])
+                        'Posible fuga de agua','Se detectó flujo continuo en '+location+'. Revisa este punto y confirma o descarta la fuga.',settings['cooldownSeconds'])
         for goal in self.repository.goals_for_unit(str(reading.unit_id)):
             recipient=next((r for r in recipients if r['userId']==goal['user_id']),None)
             if recipient:self.goals.goal_progress(goal,{'ownerUserId':snapshot['ownerUserId'],'visibleFrom':recipient['visibleFrom']})

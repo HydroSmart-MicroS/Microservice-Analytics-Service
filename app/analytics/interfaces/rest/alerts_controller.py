@@ -23,6 +23,9 @@ class GoalResource(BaseModel):
     model_config=ConfigDict(extra='forbid')
     unitId:UUID
     budget:Decimal=Field(gt=0,le=1000000,decimal_places=2)
+class DecisionResource(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    decision:str=Field(pattern='^(confirmed|dismissed)$')
 
 def router_for(service):
     router=APIRouter()
@@ -36,8 +39,16 @@ def router_for(service):
     def alerts(unitId:UUID,actor=Depends(authorized)):return service.alerts(str(unitId),actor[0],actor[1]['sub'])
     @router.post('/api/v1/alerts/{alert}/resolve')
     def resolve(alert:UUID,unitId:UUID,actor=Depends(authorized)):
-        if not service.resolve(str(unitId),actor[0],actor[1]['sub'],str(alert)):raise HTTPException(404,'Alerta no encontrada.')
+        try:
+            if not service.resolve(str(unitId),actor[0],actor[1]['sub'],str(alert)):raise HTTPException(404,'Alerta no encontrada.')
+        except ValueError as error:raise HTTPException(409,str(error))
         return {'resolved':True}
+    @router.post('/api/v1/alerts/{alert}/decision')
+    def decision(alert:UUID,unitId:UUID,body:DecisionResource,actor=Depends(authorized)):
+        try:
+            if not service.resolve(str(unitId),actor[0],actor[1]['sub'],str(alert),body.decision):raise HTTPException(404,'Alerta no encontrada.')
+        except ValueError as error:raise HTTPException(409,str(error))
+        return {'status':body.decision}
     @router.get('/api/v1/goals')
     def current_goal(unitId:UUID,actor=Depends(authorized)):return service.current_goal(str(unitId),actor[0],actor[1]['sub'])
     @router.post('/api/v1/goals',status_code=201)

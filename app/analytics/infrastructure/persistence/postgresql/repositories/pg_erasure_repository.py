@@ -12,7 +12,7 @@ def erase(user,units):
             conn.execute(f'DELETE FROM {table} WHERE user_id=%s',(user,))
         for unit in units:
             conn.execute("INSERT INTO privacy_units VALUES(encode(sha256(convert_to(%s,'UTF8')),'hex')) ON CONFLICT DO NOTHING",(unit,))
-            for table in ('alerts','alert_rules','savings_goals','recommendations','alert_samples','unit_daily_consumption','unit_tariffs','unit_tariff_periods'):
+            for table in ('alerts','alert_rules','savings_goals','recommendations','alert_samples','device_presence','unit_daily_consumption','unit_tariffs','unit_tariff_periods'):
                 conn.execute(f'DELETE FROM {table} WHERE unit_id=%s',(unit,))
             conn.execute('DELETE FROM outbox_events WHERE strpos(payload::text,%s)>0',(unit,))
         conn.execute('DELETE FROM tariff_tiers WHERE tariff_id IN(SELECT id FROM tariff_versions WHERE owner_user_id=%s)',(user,))

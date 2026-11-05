@@ -2,6 +2,9 @@ from urllib.parse import urlencode
 from fastapi import HTTPException
 from ....shared.infrastructure.messaging.rabbitmq import json_rpc,BrokerUnavailable
 class MonitoringDependenciesFacade:
+    def telemetry_ready(self):
+        status,data=json_rpc('telemetry','/health/ready',internal=True)
+        return status==200 and data.get('status')=='UP'
     def access(self,unit,token):
         status,data=json_rpc('properties','/internal/v1/units/'+unit+'/access',token)
         if status!=200:raise HTTPException(status if status in (401,403,404) else 503,'No tienes acceso a esta unidad.')
