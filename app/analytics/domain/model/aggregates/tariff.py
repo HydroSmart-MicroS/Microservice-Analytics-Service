@@ -84,6 +84,14 @@ class Tariff:
             if tier.end is None or remaining <= (tier.end-tier.start)*rate:
                 target=((tier.start+remaining/rate)*1000).quantize(D('.000001'),rounding='ROUND_FLOOR')
                 if target>=D('1000000000000'):raise ValueError('El volumen objetivo supera el rango admitido.')
+                # Component rounding can make the continuous inverse exceed the actual budget.
+                if D(self.estimate(target)['total'])>budget:
+                    low,high=0,int(target*1000000)
+                    while low<high:
+                        middle=(low+high+1)//2
+                        if D(self.estimate(D(middle)/1000000)['total'])<=budget:low=middle
+                        else:high=middle-1
+                    target=(D(low)/1000000).quantize(D('.000001'))
                 return target
             remaining-=(tier.end-tier.start)*rate
         raise ValueError('Tarifa incompleta.')

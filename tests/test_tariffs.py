@@ -73,6 +73,13 @@ class TariffTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,f'S/{minimum:.2f}'):
                 tariff.liters_for_budget(minimum-D('.01'))
 
+    def test_budget_target_respects_individually_rounded_billed_components(self):
+        tariff=Tariff('t','Redondeo','domestic',(Tier(D(0),None,D('.005'),D('.005')),))
+        target=tariff.liters_for_budget(D('.01'))
+        self.assertGreater(target,0)
+        self.assertLessEqual(D(tariff.estimate(target)['total']),D('.01'))
+        self.assertGreater(D(tariff.estimate(target+D('.000001'))['total']),D('.01'))
+
     def test_owner_edit_preserves_tax_rate(self):
         class Gateway:
             def access(self,*args):return {'ownerUserId':'owner'}

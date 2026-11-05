@@ -36,7 +36,7 @@ class MonitoringCommandServiceImpl:
         cost=tariff.estimate(Decimal(str(data['liters'])))['total']
         # A new tariff can exceed an existing budget before any water is consumed.
         minimum=Decimal(tariff.estimate(Decimal(0))['total'])
-        target=tariff.liters_for_budget(goal['budget_amount']) if goal['budget_amount']>minimum else Decimal(0)
+        target=tariff.liters_for_budget(goal['budget_amount']) if goal['budget_amount']>=tariff.minimum_budget() else Decimal(0)
         progress={'cost':cost,'liters':data['liters'],
                   'percent':float(Decimal(str(data['liters']))/target*100) if target>0 else 0,
                   'budgetPercent':float(Decimal(cost)/goal['budget_amount']*100),'targetLiters':str(target)}

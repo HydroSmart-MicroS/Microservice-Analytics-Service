@@ -9,6 +9,17 @@ from app.analytics.domain.model.aggregates.tariff import Tariff,Tier
 
 
 class AdditionalMonitoringTests(unittest.TestCase):
+    def test_valid_minimum_budget_keeps_a_positive_target_when_base_rounds_up(self):
+        repo,deps,tariffs=Mock(),Mock(),Mock()
+        tariff=Tariff('t','Test','domestic',(Tier(D(0),None,D(1),D(0)),),D('1.15'),tax_rate=D('.10'))
+        tariffs.current.return_value=tariff;deps.consumption.return_value={'liters':0}
+        budget=tariff.minimum_budget()
+        self.assertEqual(budget,D('1.27'))
+        value=MonitoringCommandServiceImpl(repo,tariffs,deps).goal_progress(
+            {'id':'g','unit_id':'u','budget_amount':budget,'month':'2026-11-01'},{'ownerUserId':'o'})
+        self.assertGreater(D(value['targetLiters']),0)
+        self.assertEqual(value['progress']['percent'],0)
+
     def test_tariff_increase_that_exceeds_budget_does_not_invent_a_liters_threshold(self):
         repo,deps,tariffs=Mock(),Mock(),Mock()
         tariffs.current.return_value=Tariff('t','Test','domestic',(Tier(D(0),None,D(1),D(0)),),D(10))
