@@ -1,0 +1,99 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HydroSmart analytics review API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "paths": {
+    "/api/v1/analytics/dashboard": {
+      "get": {
+        "summary": "Read the dashboard of an authorized unit",
+        "description": "Representative operation. The example is synthetic and shows selected fields.",
+        "responses": {
+          "200": {
+            "description": "Successful query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "boolean"
+                    },
+                    "daily": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "available": false,
+                  "daily": []
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication"
+          },
+          "402": {
+            "description": "An active plan is required by Gateway"
+          },
+          "404": {
+            "description": "The other unit's dashboard is not returned"
+          }
+        },
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
