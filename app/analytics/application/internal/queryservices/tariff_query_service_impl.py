@@ -1,3 +1,6 @@
+from dataclasses import replace
+from decimal import Decimal
+
 from ....domain.services.tariff_repository import TariffRepository
 from ....domain.services.monitoring_gateway import MonitoringGateway
 
@@ -11,7 +14,8 @@ class TariffQueryServiceImpl:
 
     def estimate(self,unit_id,token,liters,category='domestic',reference=False):
         tariff=self.current(unit_id,token,category,reference)
-        return tariff,tariff.estimate(liters)
+        preview_tariff = replace(tariff, fixed_charge=Decimal(0)) if liters == 0 else tariff
+        return tariff,preview_tariff.estimate(liters)
 
     def history(self,unit_id,token):
         access=self.gateway.access(unit_id,token)

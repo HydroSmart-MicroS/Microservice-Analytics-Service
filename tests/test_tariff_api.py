@@ -28,6 +28,12 @@ class TariffApiTests(unittest.TestCase):
         self.assertEqual(result['estimate']['total'],'28.56')
         self.assertEqual(result['minimumBudget'],'7.44')
 
+        empty=endpoint(unitId=unit,liters=D('0.000'),category='domestic',reference=False,actor=('token',{}))
+        charges=('water','sewer','fixedCharge','subtotal','tax','total')
+        self.assertEqual({key:empty['estimate'][key] for key in charges},dict.fromkeys(charges,'0.00'))
+        self.assertEqual(empty['estimate']['taxRate'],'0.18')
+        self.assertEqual(empty['minimumBudget'],'7.44')
+
     def test_resource_preserves_tax_and_legacy_requests_default_to_zero(self):
         payload={'name':'custom','category':'domestic','fixedCharge':'6.30','tiers':[{'fromM3':'0','toM3':None,'waterPrice':'2.20','sewerPrice':'1.38'}]}
         self.assertEqual(to_domain(TariffResource(**payload)).tax_rate,D(0))
